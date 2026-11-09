@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -54,6 +58,8 @@ fun SettingsScreen() {
     var vault by remember { mutableStateOf(preferences.obsidianTree) }
     var subfolder by remember { mutableStateOf(preferences.subfolder) }
     var attachments by remember { mutableStateOf(preferences.includeAttachments) }
+    val folderName by produceState<String?>(null, folder) { value = withContext(Dispatchers.IO) { context.treeName(folder) } }
+    val vaultName by produceState<String?>(null, vault) { value = withContext(Dispatchers.IO) { context.treeName(vault) } }
 
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) {
@@ -71,20 +77,18 @@ fun SettingsScreen() {
     }
 
     Column(
-        Modifier.verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Text(stringResource(R.string.tab_settings), style = MaterialTheme.typography.headlineSmall)
-
         SettingsCard(stringResource(R.string.settings_output)) {
             FolderRow(
                 title = stringResource(R.string.settings_folder),
-                current = context.treeName(folder),
+                current = folderName,
                 onPick = { folderPicker.launch(folder) },
             )
             FolderRow(
                 title = stringResource(R.string.settings_vault),
-                current = context.treeName(vault),
+                current = vaultName,
                 onPick = { vaultPicker.launch(vault) },
             )
             OutlinedTextField(
@@ -96,6 +100,7 @@ fun SettingsScreen() {
                 label = { Text(stringResource(R.string.settings_subfolder)) },
                 placeholder = { Text(KnowledgeDelivery.DEFAULT_SUBFOLDER) },
                 singleLine = true,
+                shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(
@@ -150,15 +155,13 @@ fun SettingsScreen() {
 
 @Composable
 private fun SettingsCard(title: String, content: @Composable () -> Unit) {
-    Card {
         Column(
-            Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             content()
         }
-    }
 }
 
 @Composable

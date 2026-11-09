@@ -8,8 +8,16 @@
     <string name="tab_history">History</string>
     <string name="tab_scenes">Scenes</string>
     <string name="tab_settings">Settings</string>
+    <string name="home_headline">Give your chats\na little direction.</string>
+    <string name="home_share_help">Share from WeChat</string>
+    <string name="history_empty_title">Your chats, collected.</string>
+    <string name="history_intro">Everything you bring in stays here, ready for the next step.</string>
+    <string name="send_confirm_target">Send to %1$s</string>
+    <string name="send_preview_show">Preview chat</string>
+    <string name="send_preview_hide">Hide preview</string>
 
     <string name="action_cancel">Cancel</string>
+    <string name="action_more">More actions</string>
     <string name="action_close">Close</string>
     <string name="action_copy">Copy</string>
     <string name="action_delete">Delete</string>

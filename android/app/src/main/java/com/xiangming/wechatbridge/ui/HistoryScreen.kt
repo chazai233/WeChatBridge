@@ -7,10 +7,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.xiangming.wechatbridge.R
 import com.xiangming.wechatbridge.bridge
@@ -59,21 +62,17 @@ fun HistoryScreen(onSend: (SendSubject) -> Unit) {
     val state = history
     if (state != null && state.batches.isEmpty() && state.collections.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-            Text(
-                stringResource(R.string.history_empty),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            EmptyState(AppIcons.History, stringResource(R.string.history_empty_title), stringResource(R.string.history_empty))
         }
         return
     }
 
     LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item {
-            Text(stringResource(R.string.tab_history), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.history_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         val collections = state?.collections.orEmpty()
         if (collections.isNotEmpty()) {
@@ -142,8 +141,11 @@ fun HistoryScreen(onSend: (SendSubject) -> Unit) {
 @Composable
 private fun CollectionRow(view: CollectionView, onSend: () -> Unit, onResume: () -> Unit, onDelete: () -> Unit) {
     val collection = view.collection
-    Card {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
+            Icon(AppIcons.Folder, contentDescription = null, modifier = Modifier.padding(12.dp).size(20.dp))
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     collection.name.ifBlank { stringResource(R.string.collection_default_name, formatTime(collection.createdAt)) },
@@ -161,21 +163,14 @@ private fun CollectionRow(view: CollectionView, onSend: () -> Unit, onResume: ()
             listOfNotNull(collection.targetName, collection.sceneName, collection.detail)
                 .takeIf { it.isNotEmpty() }
                 ?.let { Text(it.joinToString(" · "), style = MaterialTheme.typography.bodySmall) }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (collection.status != CollectionStatus.DELIVERING) {
-                    TextButton(onClick = onSend) {
-                        Text(
-                            stringResource(
-                                if (collection.status == CollectionStatus.DELIVERED) R.string.action_resend else R.string.action_send,
-                            ),
-                        )
-                    }
-                }
-                if (collection.status == CollectionStatus.DRAFT || collection.status == CollectionStatus.RETRY) {
-                    TextButton(onClick = onResume) { Text(stringResource(R.string.collection_resume)) }
-                }
-                TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete)) }
-            }
+            RecordActions(
+                primary = if (collection.status == CollectionStatus.DELIVERING) null else stringResource(if (collection.status == CollectionStatus.DELIVERED) R.string.action_resend else R.string.action_send),
+                onPrimary = onSend,
+                secondary = buildList {
+                    if (collection.status == CollectionStatus.DRAFT || collection.status == CollectionStatus.RETRY) add(stringResource(R.string.collection_resume) to onResume)
+                    add(stringResource(R.string.action_delete) to onDelete)
+                },
+            )
         }
     }
 }
@@ -183,8 +178,11 @@ private fun CollectionRow(view: CollectionView, onSend: () -> Unit, onResume: ()
 @Composable
 private fun BatchRow(view: BatchView, onResend: () -> Unit, onCopy: () -> Unit, onDelete: () -> Unit) {
     val state = view.state
-    Card {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
+            Icon(AppIcons.History, contentDescription = null, modifier = Modifier.padding(12.dp).size(20.dp))
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     view.title,
@@ -202,13 +200,11 @@ private fun BatchRow(view: BatchView, onResend: () -> Unit, onCopy: () -> Unit, 
             listOfNotNull(state?.targetName, state?.sceneName, view.outcome?.detail)
                 .takeIf { it.isNotEmpty() }
                 ?.let { Text(it.joinToString(" · "), style = MaterialTheme.typography.bodySmall) }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = onResend) {
-                    Text(stringResource(if (view.outcome == null) R.string.action_send else R.string.action_resend))
-                }
-                TextButton(onClick = onCopy) { Text(stringResource(R.string.action_copy)) }
-                TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete)) }
-            }
+            RecordActions(
+                primary = stringResource(if (view.outcome == null) R.string.action_send else R.string.action_resend),
+                onPrimary = onResend,
+                secondary = listOf(stringResource(R.string.action_copy) to onCopy, stringResource(R.string.action_delete) to onDelete),
+            )
         }
     }
 }

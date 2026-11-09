@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="action_more">更多操作</string>
+    <string name="home_headline">让聊天，\n有新的方向。</string>
+    <string name="home_share_help">从微信分享过来</string>
+    <string name="history_empty_title">聊过的，都在这里。</string>
+    <string name="history_intro">你分享和粘贴的内容，随时可以继续处理。</string>
+    <string name="send_confirm_target">发送至 %1$s</string>
+    <string name="send_preview_show">预览聊天内容</string>
+    <string name="send_preview_hide">收起预览</string>
     <string name="app_name">微信流</string>
     <string name="share_entry_send">微信流</string>
     <string name="share_entry_collect">分批收集到微信流</string>

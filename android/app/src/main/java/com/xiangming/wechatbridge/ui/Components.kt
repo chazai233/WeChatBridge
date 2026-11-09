@@ -9,7 +9,8 @@ import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,28 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.getValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,6 +83,10 @@ import java.time.format.DateTimeFormatter
 
 /** Material icons that are not in `material-icons-core`, built from their 24dp path data. */
 object AppIcons {
+    val More = icon("More", "M12,4a2,2 0,1 0,0 4,2 2,0 0,0 0,-4zM12,10a2,2 0,1 0,0 4,2 2,0 0,0 0,-4zM12,16a2,2 0,1 0,0 4,2 2,0 0,0 0,-4z")
+    val ArrowUp = icon("ArrowUp", "M11,20V7.83l-5.59,5.58L4,12l8,-8 8,8 -1.41,1.41L13,7.83V20z")
+    val Chevron = icon("Chevron", "M9.29,6.71 13.58,11 9.29,15.29 10.71,16.71 16.42,11 10.71,5.29z")
+    val Help = icon("Help", "M12,2a10,10 0,1 0,0 20,10 10,0 0,0 0,-20zM13,18h-2v-2h2zM15.07,10.25l-0.9,0.92C13.45,11.9 13,12.5 13,14h-2v-0.5c0,-1.1 0.45,-2.1 1.17,-2.83l1.24,-1.26A2,2 0,1 0,10 8H8a4,4 0,1 1,7.07 2.25z")
     val Folder = icon("Folder", "M10,4H4c-1.1,0 -1.99,0.9 -1.99,2L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V8c0,-1.1 -0.9,-2 -2,-2h-8l-2,-2z")
     val ContentCopy = icon("ContentCopy", "M16,1H4c-1.1,0 -2,0.9 -2,2v14h2V3h12V1zM19,5H8c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h11c1.1,0 2,-0.9 2,-2V7c0,-1.1 -0.9,-2 -2,-2zM19,21H8V7h11v14z")
     val ContentPaste = icon("ContentPaste", "M19,2h-4.18C14.4,0.84 13.3,0 12,0c-1.3,0 -2.4,0.84 -2.82,2H5c-1.1,0 -2,0.9 -2,2v16c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V4c0,-1.1 -0.9,-2 -2,-2zM12,2c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1 0.45,-1 1,-1zM19,20H5V4h2v3h10V4h2v16z")
@@ -116,12 +143,14 @@ fun formatTime(instant: Instant): String = timeFormat.format(instant.atZone(Zone
 @Composable
 fun AssetLogo(asset: String, size: Dp) {
     val context = LocalContext.current
-    val bitmap: ImageBitmap? = remember(asset) {
-        runCatching {
-            context.assets.open(asset).use { stream ->
-                BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply { inSampleSize = 4 })
-            }
-        }.getOrNull()?.asImageBitmap()
+    val bitmap by produceState<ImageBitmap?>(null, asset) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                context.assets.open(asset).use { stream ->
+                    BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply { inSampleSize = 4 })
+                }
+            }.getOrNull()?.asImageBitmap()
+        }
     }
     if (bitmap != null) {
         Image(
@@ -175,12 +204,14 @@ fun TargetTile(
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    selected: Boolean = false,
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 4.dp),
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (selected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
+            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
@@ -205,13 +236,12 @@ fun TargetTile(
 
 @Composable
 fun StatusChip(label: String, color: Color) {
-    Surface(shape = CircleShape, color = color.copy(alpha = 0.14f)) {
-        Text(
-            label,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-        )
+    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
+        Row(Modifier.padding(horizontal = 9.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(5.dp).clip(CircleShape).background(color))
+            Spacer(Modifier.width(5.dp))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -242,8 +272,66 @@ fun CollectionStatusChip(status: CollectionStatus) {
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text,
-        modifier = modifier.padding(top = 8.dp, bottom = 4.dp),
+        modifier = modifier.padding(top = 12.dp, bottom = 8.dp),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+/** A single native sheet treatment for editable content and help. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditorSheet(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.background,
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            Modifier.fillMaxWidth()
+                .heightIn(max = (LocalConfiguration.current.screenHeightDp * 0.86f).dp)
+                .imePadding().verticalScroll(rememberScrollState())
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                IconButton(onClick = onDismiss, modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)) {
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close), modifier = Modifier.size(20.dp))
+                }
+            }
+            content()
+        }
+    }
+}
+
+@Composable
+fun EmptyState(icon: ImageVector, title: String, body: String, modifier: Modifier = Modifier) {
+    Column(modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
+            Icon(icon, contentDescription = null, modifier = Modifier.padding(20.dp).size(28.dp))
+        }
+        Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+        Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+fun RecordActions(primary: String?, onPrimary: () -> Unit, secondary: List<Pair<String, () -> Unit>>) {
+    var expanded by remember { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+        if (primary != null) TextButton(onClick = onPrimary) { Text(primary) }
+        else Spacer(Modifier.weight(1f))
+        Box {
+            IconButton(onClick = { expanded = true }) {
+                Icon(AppIcons.More, contentDescription = stringResource(R.string.action_more), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                secondary.forEach { (label, action) ->
+                    DropdownMenuItem(text = { Text(label) }, onClick = { expanded = false; action() })
+                }
+            }
+        }
+    }
 }

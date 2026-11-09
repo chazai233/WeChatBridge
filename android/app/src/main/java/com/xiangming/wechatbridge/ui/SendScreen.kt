@@ -5,6 +5,16 @@ package com.xiangming.wechatbridge.ui
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.key
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +30,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -44,6 +53,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -102,6 +113,7 @@ fun SendScreen(subject: SendSubject, onClose: () -> Unit, onDone: () -> Unit) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
@@ -138,9 +150,12 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
     val material = prepared.material
     val library = prepared.scenes
 
-    var chatName by remember { mutableStateOf(prepared.suggestedChatName) }
-    var sceneId by remember { mutableStateOf(initialSceneId(preferences.lastSceneId, library)) }
-    var includeAttachments by remember { mutableStateOf(preferences.includeAttachments) }
+    var chatName by rememberSaveable { mutableStateOf(prepared.suggestedChatName) }
+    var sceneId by rememberSaveable { mutableStateOf(initialSceneId(preferences.lastSceneId, library)) }
+    var includeAttachments by rememberSaveable { mutableStateOf(preferences.includeAttachments) }
+    var targetId by rememberSaveable { mutableStateOf(preferences.lastTargetId ?: TargetCatalog.clipboard.id) }
+    val selectedTarget = TargetCatalog.byId(targetId) ?: TargetCatalog.clipboard
+    val gridColumns = if (LocalConfiguration.current.screenWidthDp < 400) 3 else 4
     var busy by remember { mutableStateOf(false) }
     var savedNote by remember { mutableStateOf<SendOutcome?>(null) }
     var pendingTarget by remember { mutableStateOf<DeliveryTarget?>(null) }
@@ -199,10 +214,11 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
         send(target)
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().imePadding()) {
+        Column(Modifier.fillMaxSize().testTag("send-form")) {
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             SummaryCard(material)
 
@@ -213,6 +229,7 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
                 placeholder = { Text(stringResource(R.string.send_chat_name_placeholder)) },
                 supportingText = { Text(stringResource(R.string.send_chat_name_hint)) },
                 singleLine = true,
+                shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -226,13 +243,17 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
                         selected = sceneId == null,
                         onClick = { sceneId = null },
                         label = { Text(stringResource(R.string.send_no_scene)) },
+                        shape = RoundedCornerShape(50),
                     )
                     library.scenes.forEach { scene ->
+                        key(scene.id) {
                         FilterChip(
                             selected = sceneId == scene.id,
                             onClick = { sceneId = scene.id },
                             label = { Text(scene.name) },
+                            shape = RoundedCornerShape(50),
                         )
+                        }
                     }
                 }
                 library.scene(sceneId)?.let { ScenePrompt.render(it, lang) }?.let { prompt ->
@@ -263,9 +284,8 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
 
             Column {
                 SectionTitle(stringResource(R.string.send_targets))
-                val lastTarget = preferences.lastTargetId
-                val targets = remember(lastTarget) { TargetCatalog.all.sortedByDescending { it.id == lastTarget } }
-                targets.chunked(GRID_COLUMNS).forEach { row ->
+                val targets = TargetCatalog.all
+                targets.chunked(gridColumns).forEach { row ->
                     Row(Modifier.fillMaxWidth()) {
                         row.forEach { target ->
                             TargetTile(
@@ -273,11 +293,12 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
                                 installed = target.kind != TargetKind.AI_APP ||
                                     target.packageName?.let { it in prepared.installedPackages } == true,
                                 enabled = !busy,
-                                onClick = { choose(target) },
+                                onClick = { targetId = target.id },
                                 modifier = Modifier.weight(1f),
+                                selected = target.id == selectedTarget.id,
                             )
                         }
-                        repeat(GRID_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+                        repeat(gridColumns - row.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
             }
@@ -287,6 +308,22 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+        Surface(color = MaterialTheme.colorScheme.background, shadowElevation = 0.dp) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = { choose(selectedTarget) }, enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp).testTag("send-confirm"),
+                ) {
+                    if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                    else {
+                        Text(if (selectedTarget.kind == TargetKind.AI_APP) stringResource(R.string.send_confirm_target, selectedTarget.displayName(lang)) else selectedTarget.displayName(lang))
+                        Spacer(Modifier.width(8.dp))
+                        Icon(AppIcons.ArrowUp, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
+                }
+            }
+        }
         }
 
         if (busy) {
@@ -327,12 +364,11 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
     }
 }
 
-private const val GRID_COLUMNS = 4
-
 @Composable
 private fun SummaryCard(material: Material) {
-    Card {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             val count = material.messageCount
             Text(
                 if (count != null) {
@@ -349,22 +385,25 @@ private fun SummaryCard(material: Material) {
                     color = Warning,
                 )
             }
-            val preview = remember(material) { material.chatText.lineSequence().take(PREVIEW_LINES).joinToString("\n") }
+            // Bound preview work for very large chat archives. Full content remains in the delivery.
+            val preview = remember(material) { material.chatText.take(6000) }
             if (preview.isNotBlank()) {
+                TextButton(onClick = { expanded = !expanded }, modifier = Modifier.testTag("preview-toggle")) {
+                    Text(stringResource(if (expanded) R.string.send_preview_hide else R.string.send_preview_show))
+                }
+                AnimatedVisibility(visible = expanded) {
                 Text(
                     preview,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = PREVIEW_LINES,
+                    maxLines = 24,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-                        .padding(10.dp),
+                        .padding(vertical = 6.dp),
                 )
+                }
             }
         }
     }
 }
-
-private const val PREVIEW_LINES = 8
