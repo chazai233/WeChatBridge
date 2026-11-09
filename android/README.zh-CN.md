@@ -124,6 +124,8 @@ v0.2.0（versionCode 2）采用黑白灰层级、轻量记录列表和胶囊导�
 
 视觉参考来自 [Mobbin 的 Grok Bot 公开预览](https://mobbin.com/apps/grok-bot-ios-c5e50da8-b7fc-423a-a264-5ea9c387d5ad)，可见资料为静态画面；动效为 Android 原生实现。系统深色模式和编辑中的投递选择均会保留，配置变更后仍可继续发送。
 
+按钮与过渡细节按用户指定的 [Emil Design Engineering 技能](https://github.com/emilkowalski/skills/blob/main/skills/emil-design-eng/SKILL.md) 调整：主按钮仅在触摸按压时缩至 0.97，120 ms ease-out；高频标签切换采用 120/80 ms 淡入淡出且不延迟操作，预览不做高度动画。键盘操作与系统动画时长设为 0 时跳过自定义动效，底部面板与菜单保留原生手势行为。
+
 Android 工作流除 43 项 core 单元测试和 debug APK 外，还在 API 35 模拟器自动操作粘贴、键盘、聊天预览、复制投递、记录与新增场景，输出浅色、深色和 320 dp / 1.3 倍字体截图。下载 run 中的 `android-ui-smoke` artifact 查看 PNG、instrumentation 报告和 `gfxinfo.txt`。模拟器检查不代表真机帧率或第三方应用分享兼容性保证。本机不安装 SDK 或 Gradle。
 
 CI debug APK 的签名由 runner 生成；即使版本号递增，不同 run 也可能不能覆盖安装。是否可直接升级应比较签名证书；本版本不引入发布密钥。

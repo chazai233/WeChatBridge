@@ -21,6 +21,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: android
@@ -88,6 +89,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: UI smoke test and real screenshots
+        timeout-minutes: 18
         uses: reactivecircus/android-emulator-runner@v2
         with:
           working-directory: android
@@ -111,11 +113,13 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload test reports
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-test-reports
           path: |
             android/core/build/reports/tests/
+            android/core/build/test-results/
             android/app/build/reports/tests/
+            android/app/build/test-results/
           if-no-files-found: ignore

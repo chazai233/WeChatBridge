@@ -2,7 +2,7 @@ package com.xiangming.wechatbridge.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -14,12 +14,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -72,43 +70,45 @@ fun HomeScreen(onSend: (SendSubject) -> Unit) {
     var discarding by remember { mutableStateOf<CollectionView?>(null) }
 
     Column(Modifier.fillMaxSize().testTag("home")) {
-    LazyColumn(
-        modifier = Modifier.weight(1f),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item(key = "welcome") {
-            Header()
-            OutlinedButton(onClick = { help = true }, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                Text(stringResource(R.string.home_share_help))
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item(key = "welcome") {
+                Header()
+                OutlinedButton(
+                    onClick = { help = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                ) { Text(stringResource(R.string.home_share_help)) }
+            }
+            home?.collecting?.let { view ->
+                item(key = "collecting") {
+                    CollectingCard(
+                        view = view,
+                        onSend = { onSend(SendSubject.Collection(view.collection.id)) },
+                        onPark = { scope.launch(Dispatchers.IO) { bridge.updateLedger { it.parkCurrent() } } },
+                        onDiscard = { discarding = view },
+                    )
+                }
+            }
+            val pending = home?.pending.orEmpty()
+            if (pending.isNotEmpty()) {
+                item(key = "pending-title") { SectionTitle(stringResource(R.string.home_pending)) }
+                items(pending, key = { it.id }) { batch ->
+                    PendingRow(batch, onSend = { onSend(SendSubject.Batches(listOf(batch.id))) })
+                }
             }
         }
-        home?.collecting?.let { view ->
-            item(key = "collecting") {
-                CollectingCard(
-                    view = view,
-                    onSend = { onSend(SendSubject.Collection(view.collection.id)) },
-                    onPark = { scope.launch(Dispatchers.IO) { bridge.updateLedger { it.parkCurrent() } } },
-                    onDiscard = { discarding = view },
-                )
-            }
-        }
-        val pending = home?.pending.orEmpty()
-        if (pending.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.home_pending)) }
-            items(pending, key = { it.id }) { batch ->
-                PendingRow(batch, onSend = { onSend(SendSubject.Batches(listOf(batch.id))) })
-            }
-        }
-    }
-    PasteCard(onPaste = { paste = context.clipboardText() })
+        PasteCard(onPaste = { paste = context.clipboardText() })
     }
     if (help) {
-        EditorSheet(stringResource(R.string.howto_title), onDismiss = { help = false }) { HowToCard() }
+        EditorSheet(stringResource(R.string.howto_title), onDismiss = { help = false }) { HowToContent() }
     }
 
     paste?.let { initial ->
-        PasteDialog(
+        PasteSheet(
             initial = initial,
             busy = importing,
             onDismiss = { if (!importing) paste = null },
@@ -188,9 +188,10 @@ private fun Header() {
 private fun PasteCard(onPaste: () -> Unit) {
     Surface(
         onClick = onPaste,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp).testTag("paste-entry"),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp).testTag("paste-entry").touchFeedback(),
         shape = RoundedCornerShape(32.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(AppIcons.ContentPaste, contentDescription = null, modifier = Modifier.size(20.dp))
@@ -205,7 +206,7 @@ private fun PasteCard(onPaste: () -> Unit) {
 @Composable
 private fun CollectingCard(view: CollectionView, onSend: () -> Unit, onPark: () -> Unit, onDiscard: () -> Unit) {
     val collection = view.collection
-    Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+    Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -233,7 +234,7 @@ private fun CollectingCard(view: CollectionView, onSend: () -> Unit, onPark: () 
                     maxLines = 2,
                 )
             }
-            Button(onClick = onSend, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.collection_finish_send)) }
+            Button(onClick = onSend, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).touchFeedback()) { Text(stringResource(R.string.collection_finish_send)) }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(onClick = onPark) { Text(stringResource(R.string.collection_park)) }
                 TextButton(onClick = onDiscard) { Text(stringResource(R.string.action_delete)) }
@@ -261,7 +262,7 @@ private fun PendingRow(batch: BatchView, onSend: () -> Unit) {
 }
 
 @Composable
-private fun HowToCard() {
+private fun HowToContent() {
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Text(stringResource(R.string.howto_share), style = MaterialTheme.typography.bodyMedium)
             Text(stringResource(R.string.howto_open_with), style = MaterialTheme.typography.bodyMedium)
@@ -276,12 +277,12 @@ private fun HowToCard() {
 }
 
 @Composable
-private fun PasteDialog(initial: String, busy: Boolean, onDismiss: () -> Unit, onConfirm: (String, Boolean) -> Unit) {
+private fun PasteSheet(initial: String, busy: Boolean, onDismiss: () -> Unit, onConfirm: (String, Boolean) -> Unit) {
     var text by rememberSaveable { mutableStateOf(initial) }
     EditorSheet(stringResource(R.string.home_paste_title), onDismiss) {
             Text(stringResource(R.string.home_paste_body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (initial.isBlank()) {
+                if (initial.isBlank() && text.isBlank()) {
                     Text(
                         stringResource(R.string.paste_dialog_empty),
                         style = MaterialTheme.typography.bodySmall,
@@ -297,7 +298,7 @@ private fun PasteDialog(initial: String, busy: Boolean, onDismiss: () -> Unit, o
                     placeholder = { Text(stringResource(R.string.paste_dialog_placeholder)) },
                 )
             }
-            Button(enabled = text.isNotBlank() && !busy, onClick = { onConfirm(text, false) }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag("paste-confirm")) {
+            Button(enabled = text.isNotBlank() && !busy, onClick = { onConfirm(text, false) }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag("paste-confirm").touchFeedback(enabled = text.isNotBlank() && !busy)) {
                 if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                 else Text(stringResource(R.string.paste_dialog_send))
             }

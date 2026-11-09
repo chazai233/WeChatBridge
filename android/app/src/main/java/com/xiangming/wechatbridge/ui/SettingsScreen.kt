@@ -80,7 +80,7 @@ fun SettingsScreen() {
         Modifier.imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        SettingsCard(stringResource(R.string.settings_output)) {
+        SettingsSection(stringResource(R.string.settings_output)) {
             FolderRow(
                 title = stringResource(R.string.settings_folder),
                 current = folderName,
@@ -110,7 +110,7 @@ fun SettingsScreen() {
             )
         }
 
-        SettingsCard(stringResource(R.string.settings_forwarding)) {
+        SettingsSection(stringResource(R.string.settings_forwarding)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.settings_attachments))
@@ -130,7 +130,7 @@ fun SettingsScreen() {
             }
         }
 
-        SettingsCard(stringResource(R.string.settings_language)) {
+        SettingsSection(stringResource(R.string.settings_language)) {
             Text(stringResource(R.string.settings_language_hint), style = MaterialTheme.typography.bodyMedium)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 OutlinedButton(onClick = {
@@ -141,7 +141,7 @@ fun SettingsScreen() {
             }
         }
 
-        SettingsCard(stringResource(R.string.settings_privacy)) {
+        SettingsSection(stringResource(R.string.settings_privacy)) {
             Text(stringResource(R.string.settings_privacy_body), style = MaterialTheme.typography.bodyMedium)
         }
 
@@ -154,7 +154,7 @@ fun SettingsScreen() {
 }
 
 @Composable
-private fun SettingsCard(title: String, content: @Composable () -> Unit) {
+private fun SettingsSection(title: String, content: @Composable () -> Unit) {
         Column(
             Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp),

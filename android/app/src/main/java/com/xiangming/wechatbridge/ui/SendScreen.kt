@@ -7,6 +7,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.size
@@ -27,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -114,7 +118,7 @@ fun SendScreen(subject: SendSubject, onClose: () -> Unit, onDone: () -> Unit) {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onClose) {
+                    IconButton(onClick = onClose, modifier = Modifier.touchFeedback().background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
                     }
                 },
@@ -227,17 +231,6 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
         ) {
             SummaryCard(material)
 
-            OutlinedTextField(
-                value = chatName,
-                onValueChange = { chatName = it },
-                label = { Text(stringResource(R.string.send_chat_name)) },
-                placeholder = { Text(stringResource(R.string.send_chat_name_placeholder)) },
-                supportingText = { Text(stringResource(R.string.send_chat_name_hint)) },
-                singleLine = true,
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
             Column {
                 SectionTitle(stringResource(R.string.send_scene))
                 Row(
@@ -266,7 +259,7 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
                         prompt,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 4,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(top = 6.dp),
                     )
@@ -308,6 +301,17 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
                 }
             }
 
+            OutlinedTextField(
+                value = chatName,
+                onValueChange = { chatName = it },
+                label = { Text(stringResource(R.string.send_chat_name)) },
+                placeholder = { Text(stringResource(R.string.send_chat_name_placeholder)) },
+                supportingText = { Text(stringResource(R.string.send_chat_name_hint)) },
+                singleLine = true,
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
             Text(
                 stringResource(R.string.send_footnote),
                 style = MaterialTheme.typography.bodySmall,
@@ -318,7 +322,7 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = { choose(selectedTarget) }, enabled = !busy,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp).testTag("send-confirm"),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp).testTag("send-confirm").touchFeedback(enabled = !busy),
                 ) {
                     if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
                     else {
@@ -372,17 +376,26 @@ private fun SendForm(prepared: PreparedSend, onDone: () -> Unit) {
 @Composable
 private fun SummaryCard(material: Material) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    val motion = motionAllowed()
+    Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             val count = material.messageCount
+            Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 if (count != null) {
                     stringResource(R.string.send_summary_messages, count, material.attachments.size)
                 } else {
                     stringResource(R.string.send_summary_items, material.texts.size, material.attachments.size)
                 },
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
             )
+                if (material.texts.isNotEmpty()) {
+                    TextButton(onClick = { expanded = !expanded }, modifier = Modifier.testTag("preview-toggle")) {
+                        Text(stringResource(if (expanded) R.string.send_preview_hide else R.string.send_preview_show))
+                    }
+                }
+            }
             if (material.unreadable.isNotEmpty()) {
                 Text(
                     stringResource(R.string.send_unreadable, material.unreadable.joinToString("、")),
@@ -393,10 +406,7 @@ private fun SummaryCard(material: Material) {
             // Bound preview work for very large chat archives. Full content remains in the delivery.
             val preview = remember(material) { material.chatText.take(6000) }
             if (preview.isNotBlank()) {
-                TextButton(onClick = { expanded = !expanded }, modifier = Modifier.testTag("preview-toggle")) {
-                    Text(stringResource(if (expanded) R.string.send_preview_hide else R.string.send_preview_show))
-                }
-                AnimatedVisibility(visible = expanded) {
+                AnimatedVisibility(visible = expanded, enter = fadeIn(tween(if (motion) 140 else 0, easing = EaseOut)), exit = fadeOut(tween(if (motion) 80 else 0, easing = EaseOut))) {
                 Text(
                     preview,
                     style = MaterialTheme.typography.bodySmall,

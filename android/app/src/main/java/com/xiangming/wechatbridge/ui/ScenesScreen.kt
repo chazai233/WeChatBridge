@@ -88,7 +88,7 @@ fun ScenesScreen() {
         val current = library
         if (current != null) {
             items(current.scenes, key = { it.id }) { scene ->
-                SceneCard(
+                SceneRow(
                     scene = scene,
                     isDefault = scene.id == current.defaultSceneId,
                     onEdit = { editing = scene },
@@ -134,7 +134,7 @@ fun ScenesScreen() {
 }
 
 @Composable
-private fun SceneCard(
+private fun SceneRow(
     scene: Scene,
     isDefault: Boolean,
     onEdit: () -> Unit,
@@ -199,7 +199,7 @@ private fun SceneEditor(initial: Scene, onDismiss: () -> Unit, onSave: (Scene) -
                     modifier = Modifier.fillMaxWidth().heightIn(min = 96.dp),
                 )
             }
-            Button(enabled = valid, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), onClick = {
+            Button(enabled = valid, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).touchFeedback(enabled = valid), onClick = {
                 onSave(initial.copy(name = name.trim(), instruction = instruction.trim(), outputSpec = outputSpec.trim()))
             }) { Text(stringResource(R.string.action_save)) }
     }

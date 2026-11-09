@@ -6,6 +6,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.ContextWrapper
 import android.graphics.BitmapFactory
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -61,6 +63,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -112,7 +115,9 @@ fun Context.findActivity(): Activity {
 }
 
 fun Context.toast(message: String) {
-    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    val show = { Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show() }
+    if (Looper.myLooper() == Looper.getMainLooper()) show()
+    else Handler(Looper.getMainLooper()).post { show() }
 }
 
 fun Context.copyText(text: String): Boolean = try {
@@ -157,7 +162,7 @@ fun AssetLogo(asset: String, size: Dp) {
         Image(
             bitmap = image,
             contentDescription = null,
-            modifier = Modifier.size(size).clip(RoundedCornerShape(size * 0.22f)),
+            modifier = Modifier.size(size).clip(RoundedCornerShape(size * 0.22f)).testTag("logo-$asset"),
         )
     } else {
         Box(Modifier.size(size).clip(RoundedCornerShape(size * 0.22f)).background(MaterialTheme.colorScheme.surfaceVariant))
@@ -298,7 +303,7 @@ fun EditorSheet(title: String, onDismiss: () -> Unit, content: @Composable Colum
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = onDismiss, modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)) {
+                IconButton(onClick = onDismiss, modifier = Modifier.touchFeedback().background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)) {
                     Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close), modifier = Modifier.size(20.dp))
                 }
             }

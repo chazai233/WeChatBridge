@@ -56,6 +56,7 @@ private enum class Tab(val label: Int, val icon: ImageVector) {
 
 @Composable
 private fun MainScreen() {
+    val motion = motionAllowed()
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     var subject by rememberSaveable(stateSaver = SubjectSaver) { mutableStateOf<SendSubject?>(null) }
     val pageState = rememberSaveableStateHolder()
@@ -66,8 +67,10 @@ private fun MainScreen() {
         AnimatedContent(
             targetState = subject,
             transitionSpec = {
-                (fadeIn(tween(180)) + slideInVertically(tween(220)) { it / 16 }) togetherWith
-                    (fadeOut(tween(120)) + slideOutVertically(tween(180)) { -it / 24 })
+                if (motion) {
+                    (fadeIn(tween(180, easing = EaseOut)) + slideInVertically(tween(220, easing = EaseOut)) { it / 20 }) togetherWith
+                        (fadeOut(tween(100, easing = EaseOut)) + slideOutVertically(tween(160, easing = EaseOut)) { -it / 28 })
+                } else fadeIn(tween(0)) togetherWith fadeOut(tween(0))
             },
             label = "delivery",
         ) { sending ->
@@ -109,7 +112,7 @@ private fun MainScreen() {
                     AnimatedContent(
                         targetState = tab,
                         modifier = Modifier.padding(padding).fillMaxSize(),
-                        transitionSpec = { fadeIn(tween(160, delayMillis = 60)) togetherWith fadeOut(tween(100)) },
+                        transitionSpec = { fadeIn(tween(if (motion) 120 else 0, easing = EaseOut)) togetherWith fadeOut(tween(if (motion) 80 else 0, easing = EaseOut)) },
                         label = "tab",
                     ) { page ->
                         pageState.SaveableStateProvider(page) {
