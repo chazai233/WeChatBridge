@@ -152,9 +152,10 @@ fun AssetLogo(asset: String, size: Dp) {
             }.getOrNull()?.asImageBitmap()
         }
     }
-    if (bitmap != null) {
+    val image = bitmap
+    if (image != null) {
         Image(
-            bitmap = bitmap,
+            bitmap = image,
             contentDescription = null,
             modifier = Modifier.size(size).clip(RoundedCornerShape(size * 0.22f)),
         )

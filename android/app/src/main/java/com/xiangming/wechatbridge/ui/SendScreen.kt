@@ -2,6 +2,7 @@
 
 package com.xiangming.wechatbridge.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -86,12 +87,16 @@ private sealed interface Loaded {
 /** Pick a scene and a destination for one batch or a whole collection, then send. */
 @Composable
 fun SendScreen(subject: SendSubject, onClose: () -> Unit, onDone: () -> Unit) {
+    BackHandler(onBack = onClose)
     val context = LocalContext.current
     val bridge = context.bridge
     val loaded by produceState<Loaded>(Loaded.Loading, subject) {
         value = withContext(Dispatchers.IO) {
             try {
-                Loaded.Ready(bridge.prepare(subject))
+                val prepared = bridge.prepare(subject)
+                // Normalization and merging can be large; warm the lazy transcript off the UI thread.
+                prepared.material.chatText
+                Loaded.Ready(prepared)
             } catch (error: Exception) {
                 Loaded.Failed(error.localizedMessage ?: error.toString())
             }

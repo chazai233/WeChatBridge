@@ -3,6 +3,6 @@
     <!-- Brand green shared with the desktop ports (shared/README badges, macOS Theme). -->
     <color name="brand">#FF07C160</color>
     <color name="ic_launcher_background">#FFF7FAF8</color>
-    <color name="window_light">#FFF7FAF8</color>
-    <color name="window_dark">#FF121513</color>
+    <color name="window_light">#FFFFFFFF</color>
+    <color name="window_dark">#FF101010</color>
 </resources>
