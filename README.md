@@ -256,6 +256,8 @@ macos/                  # macOS 端 — 完整 SwiftPM 包
 
 ios/                    # iOS 端（开发中）— XcodeGen 工程，复用 WeChatBridgeCore
 
+android/                # Android 端（开发中）— Kotlin + Compose，core/ 为无 UI 依赖的核心逻辑
+
 windows/                # Windows 端 — .NET WPF 解决方案
 ├── src/WeChatBridge.Windows/        # 主程序（WPF）
 ├── src/WeChatBridge.Windows.Core/   # Inbox 契约、投递、场景、技能（无 UI 依赖）
@@ -300,6 +302,7 @@ site/                   # Sparkle 更新源与版本说明
 - [x] 首个公开 DMG Release
 - [x] Windows 版
 - [ ] iOS 版
+- [ ] Android 版（开发中）
 - [ ] Homebrew Cask
 - [ ] 更多社区场景和技能包
 

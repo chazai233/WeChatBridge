@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WeChatBridge</string>
+    <string name="share_entry_send">WeChatBridge</string>
+    <string name="share_entry_collect">Collect into WeChatBridge</string>
+
+    <string name="tab_home">Home</string>
+    <string name="tab_history">History</string>
+    <string name="tab_scenes">Scenes</string>
+    <string name="tab_settings">Settings</string>
+
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_done">Done</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_resend">Send again</string>
+    <string name="action_save">Save</string>
+    <string name="action_send">Send</string>
+
+    <string name="home_tagline">Hand WeChat chats to AI or your notes, all on this phone.</string>
+    <string name="home_paste_title">Paste a chat</string>
+    <string name="home_paste_body">Copy messages in WeChat, then paste them here to send them with a scene prompt.</string>
+    <string name="home_paste_action">Paste from clipboard</string>
+    <string name="home_collecting_title">Collecting</string>
+    <string name="home_pending">Waiting to be sent</string>
+
+    <string name="howto_title">How to use</string>
+    <string name="howto_share">• Share: in WeChat or any app, tap Share and pick “WeChatBridge”.</string>
+    <string name="howto_open_with">• Files: open a ZIP, TXT, image or video in WeChat, choose “Open with another app”, then “WeChatBridge”.</string>
+    <string name="howto_paste">• Text: copy several messages and use “Paste from clipboard” above.</string>
+    <string name="howto_collect">• More than one batch: share each batch to “Collect into WeChatBridge”, then tap “Finish and send”.</string>
+    <string name="howto_privacy">WeChatBridge never reads WeChat\'s database, uses no accessibility service and has no network access. Everything stays in this app until you send it.</string>
+
+    <string name="paste_dialog_title">Paste chat</string>
+    <string name="paste_dialog_empty">The clipboard has no text. Paste or type the messages below.</string>
+    <string name="paste_dialog_placeholder">Messages copied from WeChat</string>
+    <string name="paste_dialog_send">Send</string>
+    <string name="paste_dialog_collect">Add to collection</string>
+    <string name="pasted_text_file_name">Pasted chat.txt</string>
+    <string name="shared_text_file_name">Shared text.txt</string>
+    <string name="shared_file_name">Shared file</string>
+
+    <string name="share_importing">Saving what you shared…</string>
+    <string name="share_nothing">Nothing readable was shared.</string>
+    <string name="import_failed">Could not save the share: %1$s</string>
+
+    <string name="collect_added">Batch %1$d collected</string>
+    <string name="collect_next_hint">Go back to WeChat, select the next batch and share it to “Collect into WeChatBridge” again. Finish when everything is in.</string>
+    <string name="collect_continue">Collect the next batch</string>
+    <string name="collection_finish_send">Finish and send</string>
+    <string name="collection_park">Pause</string>
+    <string name="collection_resume">Continue collecting</string>
+    <string name="collection_summary">Batches: %1$d</string>
+    <string name="collection_summary_messages">Batches: %1$d · messages: %2$d</string>
+    <string name="collection_last_message">Last: %1$s: %2$s</string>
+    <string name="collection_default_name">Collection %1$s</string>
+    <string name="collection_discard_title">Delete this collection?</string>
+    <string name="collection_discard_message">Its batches (%1$d) will be deleted from this phone.</string>
+    <string name="collection_interrupted">Sending was interrupted. The original files are kept; check the destination, then send again.</string>
+    <string name="collection_missing">This collection no longer exists.</string>
+    <string name="collection_busy">This collection is being sent. Try again in a moment.</string>
+
+    <string name="history_empty">Nothing here yet. Share a chat to WeChatBridge, or paste one on Home.</string>
+    <string name="history_collections">Collections</string>
+    <string name="history_batches">Batches</string>
+    <string name="batch_meta">%1$s · files: %2$d</string>
+    <string name="batch_title_more">%1$s and %2$d more</string>
+    <string name="batch_delete_message">The batch and its files will be deleted from this phone.</string>
+    <string name="delete_title">Delete?</string>
+
+    <string name="status_pending">Not sent</string>
+    <string name="status_collecting">Collecting</string>
+    <string name="status_draft">Paused</string>
+    <string name="status_delivering">Sending</string>
+    <string name="status_delivered">Sent</string>
+    <string name="status_copied">Copied</string>
+    <string name="status_failed">Failed</string>
+    <string name="status_retry">Retry</string>
+    <string name="status_expired">Expired</string>
+
+    <string name="scenes_intro">A scene is the prompt that goes in front of the chat. Pick one each time you send.</string>
+    <string name="scene_new">New scene</string>
+    <string name="scene_edit_title">Edit scene</string>
+    <string name="scene_field_name">Name</string>
+    <string name="scene_field_instruction">Instruction</string>
+    <string name="scene_field_output">Output spec</string>
+    <string name="scene_default">Default</string>
+    <string name="scene_make_default">Make default</string>
+    <string name="scene_restore_defaults">Restore built-in scenes</string>
+    <string name="scene_delete_message">Delete the scene “%1$s”?</string>
+
+    <string name="send_title">Send</string>
+    <string name="send_title_collection">Send collection</string>
+    <string name="send_nothing">There is nothing left to send.</string>
+    <string name="send_summary_messages">Messages: %1$d · attachments: %2$d</string>
+    <string name="send_summary_items">Texts: %1$d · attachments: %2$d</string>
+    <string name="send_unreadable">Could not read: %1$s. These files are sent as they are.</string>
+    <string name="send_chat_name">Chat name</string>
+    <string name="send_chat_name_placeholder">e.g. Product team</string>
+    <string name="send_chat_name_hint">Used for the note title and the history.</string>
+    <string name="send_scene">Scene</string>
+    <string name="send_no_scene">No prompt</string>
+    <string name="send_attachments">Include images and videos (%1$d)</string>
+    <string name="send_attachments_hint">Some apps accept only text; the chat text is always sent.</string>
+    <string name="send_targets">Send to</string>
+    <string name="send_footnote">The text is copied to the clipboard first. If an app opens without it, long-press the input box and paste.</string>
+    <string name="send_pick_folder">Choose the folder to save notes in.</string>
+    <string name="send_pick_vault">Choose your Obsidian vault folder.</string>
+    <string name="send_saved_title">Note saved</string>
+    <string name="send_open_obsidian">Open in Obsidian</string>
+    <string name="send_obsidian_missing">Obsidian could not be opened. The note is saved in the vault folder.</string>
+    <string name="share_sheet_title">Send chat to</string>
+    <string name="target_not_installed">Not installed</string>
+
+    <string name="detail_handed_to">Handed to %1$s</string>
+    <string name="detail_handed_text_only">Handed to %1$s as text only; it did not take the attachments</string>
+    <string name="detail_opened_app">Opened %1$s; the text is on the clipboard</string>
+    <string name="detail_not_installed">%1$s is not installed. The text is on the clipboard.</string>
+    <string name="detail_copied">Copied to the clipboard</string>
+    <string name="detail_copy_failed">Could not copy to the clipboard</string>
+    <string name="detail_copy_only">No app took the share. The text is on the clipboard.</string>
+    <string name="detail_share_sheet">Opened the system share sheet</string>
+    <string name="detail_saved">Saved to %1$s</string>
+    <string name="detail_saved_unchanged">%1$s already has these messages</string>
+    <string name="detail_folder_missing">No folder chosen yet. Choose one in Settings.</string>
+    <string name="detail_folder_lost">The chosen folder is no longer accessible. Choose it again in Settings.</string>
+    <string name="detail_failed">Sending failed: %1$s</string>
+    <string name="toast_handed_to">Sent to %1$s. If the text is missing, long-press the input box and paste.</string>
+    <string name="toast_handed_text_only">Sent the text to %1$s; it did not take the attachments.</string>
+    <string name="toast_opened_app">Opened %1$s. Long-press the input box and paste.</string>
+
+    <string name="settings_output">Saving notes</string>
+    <string name="settings_folder">Folder</string>
+    <string name="settings_vault">Obsidian vault</string>
+    <string name="settings_not_chosen">Not chosen</string>
+    <string name="settings_choose">Choose</string>
+    <string name="settings_change">Change</string>
+    <string name="settings_subfolder">Subfolder</string>
+    <string name="settings_subfolder_hint">Notes go to Subfolder/Chat name.md and attachments to Subfolder/附件, as on the desktop apps. Use “/” for nested folders.</string>
+    <string name="settings_forwarding">Sending</string>
+    <string name="settings_attachments">Include images and videos</string>
+    <string name="settings_attachments_hint">The default for the switch on the send screen.</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_hint">WeChatBridge follows the system language (中文 / English). On Android 13 and later you can pick a language just for this app.</string>
+    <string name="settings_language_open">Choose app language</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_body">Chats only come from what you share or paste. WeChatBridge does not read WeChat\'s database, does not use accessibility services, does not inject into WeChat and has no network permission. Batches, scenes and history stay in this app\'s private storage and are excluded from backups.</string>
+    <string name="settings_version">Version %1$s</string>
+</resources>

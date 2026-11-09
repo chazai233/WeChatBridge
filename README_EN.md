@@ -249,6 +249,7 @@ macos/                    # macOS SwiftPM package
 ├── Scripts/              # Build, install, signing, and release tooling
 └── Tests/                # Swift Testing / XCTest coverage
 ios/                      # iOS app (in development), XcodeGen project reusing WeChatBridgeCore
+android/                  # Android app (in development), Kotlin + Compose; core/ holds the UI-free logic
 windows/                  # Windows .NET WPF solution, Share Target, and tests
 shared/                   # Agent logos, design assets, screenshots, demos, and skills
 site/                     # Sparkle update feed and release notes
@@ -280,6 +281,7 @@ Please report security issues privately through [GitHub Security Advisories](htt
 - [x] First public DMG release
 - [x] Windows version
 - [ ] iOS version
+- [ ] Android version (in development)
 - [ ] Homebrew Cask
 - [ ] More community scenes and skill packages
 

@@ -70,3 +70,6 @@ memory/
 # Python byte-code from local scripts
 __pycache__/
 *.pyc
+
+# Agent scratch space
+.context/

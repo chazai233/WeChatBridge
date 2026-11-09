@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only what a delivery hands out: batch files and the per-delivery work folder. -->
+<paths>
+    <files-path name="inbox" path="Inbox/Ready/" />
+    <cache-path name="work" path="work/" />
+</paths>

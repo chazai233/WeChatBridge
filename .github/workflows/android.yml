@@ -1,0 +1,73 @@
+name: Android
+
+on:
+  push:
+    paths:
+      - 'android/**'
+      - 'shared/AppLogos/**'
+      - '.github/workflows/android.yml'
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'shared/AppLogos/**'
+      - '.github/workflows/android.yml'
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_VERSION: '8.11.1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Installs Gradle on PATH and caches dependencies. The wrapper JAR is a
+      # binary that could not be produced where this project was written, so
+      # CI generates it with the pinned Gradle when the repository lacks it.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Generate Gradle wrapper JAR if missing
+        run: |
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            gradle wrapper --gradle-version "$GRADLE_VERSION" --distribution-type bin
+          fi
+          chmod +x gradlew
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon :core:test :app:testDebugUnitTest
+
+      - name: Build debug APK
+        run: ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wechatbridge-android-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-reports
+          path: |
+            android/core/build/reports/tests/
+            android/app/build/reports/tests/
+          if-no-files-found: ignore
