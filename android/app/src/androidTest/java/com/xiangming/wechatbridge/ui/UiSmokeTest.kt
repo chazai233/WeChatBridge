@@ -1,6 +1,7 @@
 package com.xiangming.wechatbridge.ui
 
 import android.graphics.Bitmap
+import android.content.Intent
 import android.graphics.Color
 import android.content.res.Configuration
 import android.content.res.Resources
@@ -10,6 +11,7 @@ import android.view.inspector.WindowInspector
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.espresso.Espresso
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.xiangming.wechatbridge.R
@@ -17,18 +19,21 @@ import com.xiangming.wechatbridge.bridge
 import com.xiangming.wechatbridge.core.Lang
 import org.junit.Assert.assertEquals
 import org.junit.Rule
+import org.junit.FixMethodOrder
+import org.junit.runners.MethodSorters
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 
 /** Exercises real navigation, IME, sheet dismissal and clipboard delivery on an emulator. */
 @RunWith(AndroidJUnit4::class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UiSmokeTest {
     @get:Rule val ui = createAndroidComposeRule<MainActivity>()
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
 
     @Test
-    fun pastePreviewDeliverAndManageScenes() {
+    fun a_pastePreviewDeliverAndManageScenes() {
         shell("cmd uimode night no")
         waitFor("home")
         assertEquals("en", Resources.getSystem().configuration.locales[0].language)
@@ -136,6 +141,23 @@ class UiSmokeTest {
         screenshot("12-chinese-restored-home", dark = false)
         File(outputDirectory(), "language-check.txt").appendText("explicitEnglishVerified=true\nrestoredChineseVerified=true\n")
         exportCapture("language-check.txt")
+    }
+
+    @Test
+    fun b_sharedBatchSurvivesRecreationWithoutImportingTwice() {
+        val context = instrumentation.targetContext
+        val originalCount = context.bridge.inbox.batches().size
+        val incoming = Intent(context, ShareActivity::class.java)
+            .setAction(Intent.ACTION_SEND).setType("text/plain")
+            .putExtra(Intent.EXTRA_TEXT, CHAT)
+        ActivityScenario.launch<ShareActivity>(incoming).use { scenario ->
+            waitFor("send-form")
+            assertEquals(originalCount + 1, context.bridge.inbox.batches().size)
+            scenario.recreate()
+            waitFor("send-form")
+            assertEquals(originalCount + 1, context.bridge.inbox.batches().size)
+            ui.onNodeWithText("发送").assertExists()
+        }
     }
 
     private fun waitFor(tag: String) {

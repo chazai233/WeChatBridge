@@ -51,6 +51,7 @@
     <string name="shared_file_name">Shared file</string>
 
     <string name="share_importing">Saving what you shared…</string>
+    <string name="share_interrupted">Sharing was interrupted. Any imported content is kept in History. Please go back to review it or share again.</string>
     <string name="share_nothing">Nothing readable was shared.</string>
     <string name="import_failed">Could not save the share: %1$s</string>
 

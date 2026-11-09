@@ -51,6 +51,7 @@
     <string name="shared_file_name">共享文件</string>
 
     <string name="share_importing">正在保存分享的内容…</string>
+    <string name="share_interrupted">分享被中断。已导入的内容保留在记录中，请返回查看或重新分享。</string>
     <string name="share_nothing">没有收到可读取的内容。</string>
     <string name="import_failed">保存失败：%1$s</string>
 

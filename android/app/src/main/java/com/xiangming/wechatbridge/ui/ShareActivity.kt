@@ -25,6 +25,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,12 +55,6 @@ class ShareActivity : LocalizedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Recreated after process death: the share was already imported (or the
-        // URI grant is gone), so there is nothing left to do here.
-        if (savedInstanceState != null) {
-            finish()
-            return
-        }
         val collect = intent.component?.className?.endsWith(".ShareCollect") == true
         val incoming = intent
         setContent {
@@ -79,10 +75,27 @@ private sealed interface ShareState {
 private fun ShareFlow(intent: Intent, collect: Boolean, onFinish: () -> Unit) {
     val context = LocalContext.current
     val bridge = context.bridge
-    var state by remember { mutableStateOf<ShareState>(ShareState.Importing) }
-    var sendCollection by remember { mutableStateOf(false) }
+    val stateSaver = remember(context) {
+        listSaver<ShareState, String>(
+            save = { state ->
+                when (state) {
+                    is ShareState.Imported -> listOf("ready", state.result.batchId, state.result.collectionId.orEmpty(), state.result.collectedCount.toString())
+                    else -> listOf("interrupted")
+                }
+            },
+            restore = { saved ->
+                if (saved.firstOrNull() == "ready") {
+                    ShareState.Imported(Imported(saved[1], saved[2].ifBlank { null }, saved[3].toInt()))
+                } else ShareState.Failed(context.getString(R.string.share_interrupted))
+            },
+        )
+    }
+    var state by rememberSaveable(stateSaver = stateSaver) { mutableStateOf<ShareState>(ShareState.Importing) }
+    var sendCollection by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        // A restored batch lives in private storage; do not consume the external share twice.
+        if (state != ShareState.Importing) return@LaunchedEffect
         state = withContext(Dispatchers.IO) {
             try {
                 val items = IncomingIntents.read(context, intent)
