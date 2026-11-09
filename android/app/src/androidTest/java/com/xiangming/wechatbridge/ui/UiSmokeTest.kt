@@ -123,7 +123,7 @@ class UiSmokeTest {
         // Configuration alone can update before the actual frame. Check the empty toolbar pixel.
         ui.waitUntil(10_000) {
             val frame = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
-            val level = Color.red(frame.getPixel(frame.width / 2, frame.height / 12))
+            val level = Color.red(frame.getPixel(frame.width - 24, frame.height / 12))
             frame.recycle()
             if (dark) level < 80 else level > 140
         }
