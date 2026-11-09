@@ -11,6 +11,7 @@ import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
 import com.xiangming.wechatbridge.R
 import com.xiangming.wechatbridge.data.Bridge
+import com.xiangming.wechatbridge.data.userError
 import com.xiangming.wechatbridge.core.DeliveryPlan
 import com.xiangming.wechatbridge.core.DeliveryPlanner
 import com.xiangming.wechatbridge.core.DeliveryTarget
@@ -52,7 +53,7 @@ data class SendOutcome(
  * the user is one long-press paste away from done.
  */
 class Deliverer(private val activity: Activity, private val bridge: Bridge) {
-    private val lang = Lang.of(activity.resources.configuration.locales[0].language)
+    private val lang = bridge.lang()
 
     private data class Attempt(
         val kind: OutcomeKind,
@@ -80,7 +81,7 @@ class Deliverer(private val activity: Activity, private val bridge: Bridge) {
                 TargetKind.FOLDER, TargetKind.OBSIDIAN -> withContext(Dispatchers.IO) { saveNote(target, material, request) }
             }
         } catch (error: Exception) {
-            val reason = error.localizedMessage ?: error.toString()
+            val reason = activity.userError(error)
             Attempt(OutcomeKind.FAILED, activity.getString(R.string.detail_failed, reason))
         }
         withContext(Dispatchers.IO) {

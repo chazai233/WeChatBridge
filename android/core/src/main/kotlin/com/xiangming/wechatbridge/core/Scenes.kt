@@ -53,6 +53,15 @@ data class SceneLibrary(
     fun withDefault(id: String?): SceneLibrary =
         copy(defaultSceneId = id.takeIf { candidate -> scenes.any { it.id == candidate } })
 
+    /** Translate only untouched built-ins; edits, custom scenes and deletions remain as written. */
+    fun localizingUneditedStarters(lang: Lang): SceneLibrary {
+        val previous = SceneDefaults.starters(if (lang == Lang.ZH) Lang.EN else Lang.ZH).associateBy { it.id }
+        val localized = SceneDefaults.starters(lang).associateBy { it.id }
+        return copy(scenes = scenes.map { scene ->
+            if (scene == previous[scene.id]) localized.getValue(scene.id) else scene
+        })
+    }
+
     /** Adds back any starter scene the user deleted, without touching edited ones. */
     fun restoringStarters(lang: Lang): SceneLibrary {
         val existing = scenes.map { it.id }.toSet()

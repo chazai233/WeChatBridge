@@ -3,8 +3,6 @@ package com.xiangming.wechatbridge.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +22,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +40,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.xiangming.wechatbridge.R
 import com.xiangming.wechatbridge.bridge
 import com.xiangming.wechatbridge.core.KnowledgeDelivery
+import com.xiangming.wechatbridge.core.Lang
 
 /** Takes a long-lived grant on a SAF tree, so the folder still works after a reboot. */
 fun Context.keepTree(uri: Uri) {
@@ -58,6 +61,7 @@ fun SettingsScreen() {
     var vault by remember { mutableStateOf(preferences.obsidianTree) }
     var subfolder by remember { mutableStateOf(preferences.subfolder) }
     var attachments by remember { mutableStateOf(preferences.includeAttachments) }
+    var pickingLanguage by remember { mutableStateOf(false) }
     val folderName by produceState<String?>(null, folder) { value = withContext(Dispatchers.IO) { context.treeName(folder) } }
     val vaultName by produceState<String?>(null, vault) { value = withContext(Dispatchers.IO) { context.treeName(vault) } }
 
@@ -132,13 +136,7 @@ fun SettingsScreen() {
 
         SettingsSection(stringResource(R.string.settings_language)) {
             Text(stringResource(R.string.settings_language_hint), style = MaterialTheme.typography.bodyMedium)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                OutlinedButton(onClick = {
-                    val intent = Intent(Settings.ACTION_APP_LOCALE_SETTINGS)
-                        .setData(Uri.fromParts("package", context.packageName, null))
-                    runCatching { context.startActivity(intent) }
-                }) { Text(stringResource(R.string.settings_language_open)) }
-            }
+            OutlinedButton(onClick = { pickingLanguage = true }) { Text(stringResource(R.string.settings_language_open)) }
         }
 
         SettingsSection(stringResource(R.string.settings_privacy)) {
@@ -150,6 +148,29 @@ fun SettingsScreen() {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+    if (pickingLanguage) {
+        EditorSheet(stringResource(R.string.settings_language), onDismiss = { pickingLanguage = false }) {
+            listOf(Lang.ZH to R.string.language_zh, Lang.EN to R.string.language_en).forEach { (language, label) ->
+                Row(
+                    Modifier.fillMaxWidth().selectable(
+                        selected = preferences.language == language,
+                        role = Role.RadioButton,
+                        onClick = {
+                            pickingLanguage = false
+                            if (preferences.language != language) {
+                                preferences.language = language
+                                context.findActivity().recreate()
+                            }
+                        },
+                    ).padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(selected = preferences.language == language, onClick = null)
+                    Text(stringResource(label), modifier = Modifier.padding(start = 12.dp))
+                }
+            }
+        }
     }
 }
 

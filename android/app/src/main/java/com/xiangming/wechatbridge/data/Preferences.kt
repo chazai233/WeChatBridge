@@ -3,10 +3,16 @@ package com.xiangming.wechatbridge.data
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.edit
+import com.xiangming.wechatbridge.core.Lang
 
 /** Small user choices. Chat content never goes in here. */
 class Preferences(context: Context) {
     private val store = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+
+    /** Chinese is the default even on an English device; English is an explicit app choice. */
+    var language: Lang
+        get() = if (store.getString("language", "zh") == "en") Lang.EN else Lang.ZH
+        set(value) = store.edit { putString("language", if (value == Lang.EN) "en" else "zh") }
 
     var folderTree: Uri?
         get() = store.getString(KEY_FOLDER, null)?.let(Uri::parse)

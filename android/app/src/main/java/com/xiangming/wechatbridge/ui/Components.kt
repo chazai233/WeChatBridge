@@ -71,6 +71,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.xiangming.wechatbridge.R
+import com.xiangming.wechatbridge.bridge
 import com.xiangming.wechatbridge.core.BatchOutcome
 import com.xiangming.wechatbridge.core.CollectionStatus
 import com.xiangming.wechatbridge.core.DeliveryTarget
@@ -138,7 +139,7 @@ fun Context.clipboardText(): String {
 }
 
 @Composable
-fun currentLang(): Lang = Lang.of(LocalConfiguration.current.locales[0].language)
+fun currentLang(): Lang = LocalContext.current.bridge.lang()
 
 private val timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 

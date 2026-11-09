@@ -71,9 +71,10 @@ class PreparedSend(
  * scenes and preferences. Every mutation bumps [revision] so screens reload.
  * Call from a background dispatcher; the methods do file I/O.
  */
-class Bridge(private val context: Context) {
-    val inbox = Inbox(File(context.filesDir, "Inbox"))
-    val preferences = Preferences(context)
+class Bridge(private val baseContext: Context) {
+    val preferences = Preferences(baseContext)
+    private val context: Context get() = baseContext.inAppLanguage(lang())
+    val inbox = Inbox(File(baseContext.filesDir, "Inbox"))
     private val sceneStore = SceneStore(File(context.filesDir, "scenes.json"))
     private val collectionStore = CollectionStore(File(inbox.root, "collections.json"))
     private val workRoot = File(context.cacheDir, "work")
@@ -82,7 +83,7 @@ class Bridge(private val context: Context) {
     private val changes = MutableStateFlow(0)
     val revision: StateFlow<Int> = changes
 
-    fun lang(): Lang = Lang.of(context.resources.configuration.locales[0].language)
+    fun lang(): Lang = preferences.language
 
     fun housekeeping() {
         inbox.ensureCreated()
@@ -141,11 +142,16 @@ class Bridge(private val context: Context) {
     fun insight(collection: BatchCollection): BatchInsight =
         BatchInsights.read(collection.batchIds.mapNotNull { inbox.batch(it) })
 
-    fun sceneLibrary(): SceneLibrary = synchronized(lock) { sceneStore.load(lang()) }
+    fun sceneLibrary(): SceneLibrary = synchronized(lock) { loadScenes() }
+
+    private fun loadScenes(): SceneLibrary {
+        val stored = sceneStore.load(lang())
+        return stored.localizingUneditedStarters(lang()).also { if (it != stored) sceneStore.save(it) }
+    }
 
     fun updateScenes(transform: (SceneLibrary) -> SceneLibrary): SceneLibrary {
         val next = synchronized(lock) {
-            transform(sceneStore.load(lang())).also { sceneStore.save(it) }
+            transform(loadScenes()).also { sceneStore.save(it) }
         }
         changed()
         return next

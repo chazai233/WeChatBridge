@@ -58,7 +58,7 @@
 | 群与场景绑定、场景快捷键、技能库 | 有 | 暂无 |
 | Obsidian / 文件夹 | 直接写路径 | SAF 选目录后写入；笔记格式与合并规则与 `KnowledgeDelivery` 一致，可与桌面版互相追加 |
 | `intent.json`（90 秒转发意图） | 分享扩展写入，主程序消费 | 不使用：分享页本身就在前台让你选目标 |
-| 语言 | 应用内切换 | 跟随系统；Android 13+ 可在系统设置里单独选择 |
+| 语言 | 应用内切换 | 默认简体中文；设置中保留中文 / English 选择，Android 8 及以上均可切换 |
 
 ## 数据存放
 
@@ -98,7 +98,7 @@ cd android
 ./gradlew :core:test :app:testDebugUnitTest :app:assembleDebug
 ```
 
-仓库里暂时没有 `gradle/wrapper/gradle-wrapper.jar`（编写时的环境无法下载）。第一次本地构建前，用 Gradle 8.11.1 运行一次 `gradle wrapper --gradle-version 8.11.1` 生成它，或直接用 Android Studio 打开 `android/`。CI（`.github/workflows/android.yml`）在缺少 JAR 时会用 `gradle/actions/setup-gradle` 安装的 Gradle 自动生成，然后跑单元测试、构建 debug APK 并上传为 artifact。
+仓库里暂时没有 `gradle/wrapper/gradle-wrapper.jar`（编写时的环境无法下载）。第一次本地构建前，用 Gradle 8.11.1 运行一次 `gradle wrapper --gradle-version 8.11.1` 生成它，或直接用 Android Studio 打开 `android/`。CI 在缺少 JAR 时优先使用 runner 自带的 Gradle 在空目录生成，失败再获取官方固定版本 JAR；`setup-gradle` 负责缓存，发行包下载可重试。工作流随后跑单元测试、构建 debug APK 并上传 artifact。
 
 ## 待核实
 
@@ -126,6 +126,8 @@ v0.2.0（versionCode 2）采用黑白灰层级、轻量记录列表和胶囊导�
 
 按钮与过渡细节按用户指定的 [Emil Design Engineering 技能](https://github.com/emilkowalski/skills/blob/main/skills/emil-design-eng/SKILL.md) 调整：主按钮仅在触摸按压时缩至 0.97，120 ms ease-out；高频标签切换采用 120/80 ms 淡入淡出且不延迟操作，预览不做高度动画。键盘操作与系统动画时长设为 0 时跳过自定义动效，底部面板与菜单保留原生手势行为。
 
-Android 工作流除 43 项 core 单元测试和 debug APK 外，还在 API 35 模拟器自动操作粘贴、键盘、聊天预览、复制投递、记录与新增场景，输出浅色、深色和 320 dp / 1.3 倍字体截图。下载 run 中的 `android-ui-smoke` artifact 查看 PNG、instrumentation 报告和 `gfxinfo.txt`。模拟器检查不代表真机帧率或第三方应用分享兼容性保证。本机不安装 SDK 或 Gradle。
+应用默认使用简体中文，即使手机系统为英文也会显示中文。设置中保留「选择应用语言」，可主动切换 English；活动资源、目标名称与内置提示词使用同一个偏好，Android 8 及以上均可使用。切换时只翻译未经修改的内置场景，用户聊天、自定义或已编辑场景保留原文。语言配置仅覆盖 locale，不固定深色模式、字体大小或屏幕密度。
+
+Android 工作流除 45 项 core 单元测试和 debug APK 外，还在英文系统的 API 35 模拟器确认首启中文、手动 English 切换和切回中文，并自动操作粘贴、真实软键盘、聊天预览、复制投递、记录与新增场景，输出中文浅色、深色和 320 dp / 1.3 倍字体截图。下载 run 中的 `android-ui-smoke` artifact 查看 PNG、instrumentation 报告、语言检查记录和 `gfxinfo.txt`，`android-test-reports` 包含单元测试 XML。模拟器检查不代表真机帧率或第三方应用分享兼容性保证。本机不安装 SDK 或 Gradle。
 
 CI debug APK 的签名由 runner 生成；即使版本号递增，不同 run 也可能不能覆盖安装。是否可直接升级应比较签名证书；本版本不引入发布密钥。

@@ -2,7 +2,6 @@ package com.xiangming.wechatbridge.ui
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
@@ -40,6 +39,7 @@ import com.xiangming.wechatbridge.core.BatchInsight
 import com.xiangming.wechatbridge.data.Imported
 import com.xiangming.wechatbridge.data.IncomingIntents
 import com.xiangming.wechatbridge.data.SendSubject
+import com.xiangming.wechatbridge.data.userError
 import com.xiangming.wechatbridge.ui.theme.WeChatBridgeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -49,7 +49,7 @@ import kotlinx.coroutines.withContext
  * send screen; 「分批收集到微信流」 imports into the open collection and offers
  * to go back to WeChat for the next batch.
  */
-class ShareActivity : ComponentActivity() {
+class ShareActivity : LocalizedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -92,7 +92,7 @@ private fun ShareFlow(intent: Intent, collect: Boolean, onFinish: () -> Unit) {
                     ShareState.Imported(bridge.importShare(items, collect))
                 }
             } catch (error: Exception) {
-                ShareState.Failed(context.getString(R.string.import_failed, error.localizedMessage ?: error.toString()))
+                ShareState.Failed(context.getString(R.string.import_failed, context.userError(error)))
             }
         }
     }

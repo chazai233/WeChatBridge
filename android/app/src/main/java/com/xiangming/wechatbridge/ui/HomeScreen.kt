@@ -51,6 +51,7 @@ import com.xiangming.wechatbridge.data.BatchView
 import com.xiangming.wechatbridge.data.CollectionView
 import com.xiangming.wechatbridge.data.HomeState
 import com.xiangming.wechatbridge.data.SendSubject
+import com.xiangming.wechatbridge.data.userError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -132,7 +133,7 @@ fun HomeScreen(onSend: (SendSubject) -> Unit) {
                             onSend(SendSubject.Batches(listOf(imported.batchId)))
                         }
                     }.onFailure {
-                        context.toast(context.getString(R.string.import_failed, it.localizedMessage ?: it.toString()))
+                        context.toast(context.getString(R.string.import_failed, context.userError(it)))
                     }
                 }
             },

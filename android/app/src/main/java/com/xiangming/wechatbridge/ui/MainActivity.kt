@@ -3,7 +3,6 @@
 package com.xiangming.wechatbridge.ui
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,7 +38,7 @@ import com.xiangming.wechatbridge.R
 import com.xiangming.wechatbridge.data.SendSubject
 import com.xiangming.wechatbridge.ui.theme.WeChatBridgeTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : LocalizedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

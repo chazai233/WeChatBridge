@@ -3,6 +3,7 @@ package com.xiangming.wechatbridge.ui
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.ParcelFileDescriptor
 import android.view.WindowInsets
 import android.view.inspector.WindowInspector
@@ -11,6 +12,10 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.xiangming.wechatbridge.R
+import com.xiangming.wechatbridge.bridge
+import com.xiangming.wechatbridge.core.Lang
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,6 +31,14 @@ class UiSmokeTest {
     fun pastePreviewDeliverAndManageScenes() {
         shell("cmd uimode night no")
         waitFor("home")
+        assertEquals("en", Resources.getSystem().configuration.locales[0].language)
+        assertEquals(Lang.ZH, ui.activity.bridge.lang())
+        assertEquals("微信流", ui.activity.getString(R.string.app_name))
+        ui.onNodeWithText("首页").assertIsDisplayed()
+        File(outputDirectory(), "language-check.txt").writeText(
+            "system=${Resources.getSystem().configuration.locales[0]}\ninitialAppLocale=${ui.activity.resources.configuration.locales[0]}\ninitialPreference=${ui.activity.bridge.lang()}\ninitialAppName=${ui.activity.getString(R.string.app_name)}\n",
+        )
+        exportCapture("language-check.txt")
         screenshot("01-home-light", dark = false)
 
         ui.onNodeWithTag("paste-entry").performClick()
@@ -41,7 +54,7 @@ class UiSmokeTest {
         ui.onNodeWithTag("send-confirm").assertIsDisplayed().assertIsEnabled()
         screenshot("03-send-light", dark = false)
         ui.onNodeWithTag("preview-toggle").performScrollTo().performClick()
-        ui.onNodeWithText("Alex: Let us ship the Android update on Friday.", substring = true).assertExists()
+        ui.onNodeWithText("小陈：我们周五发布安卓版更新。", substring = true).assertExists()
         screenshot("04-preview-light", dark = false)
 
         shell("cmd uimode night yes")
@@ -49,26 +62,26 @@ class UiSmokeTest {
         ui.waitUntil(10_000) { ui.activity.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES }
         waitFor("send-form") // The selected batch and draft survive activity recreation.
         ui.onNodeWithTag("send-confirm").assertIsDisplayed()
-        ui.onNodeWithText("Alex: Let us ship the Android update on Friday.", substring = true).assertExists()
+        ui.onNodeWithText("小陈：我们周五发布安卓版更新。", substring = true).assertExists()
         screenshot("05-send-dark", dark = true)
         ui.onNodeWithTag("send-confirm").performClick() // Default destination: clipboard.
         waitFor("home")
         screenshot("06-home-dark", dark = true)
         ui.onNodeWithTag("nav-history").performClick()
-        ui.waitUntil(10_000) { ui.onAllNodesWithText("Copied").fetchSemanticsNodes().isNotEmpty() }
-        ui.onNodeWithText("Copied").assertIsDisplayed()
+        ui.waitUntil(10_000) { ui.onAllNodesWithText("已复制").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithText("已复制").assertIsDisplayed()
         screenshot("07-history-dark", dark = true)
 
         ui.onNodeWithTag("nav-scenes").performClick()
-        ui.onNodeWithText("New scene").performClick()
-        ui.onNodeWithText("Name").performTextInput("Release notes")
-        ui.onNodeWithText("Instruction").performTextInput("Summarize the decisions and next steps.")
+        ui.onNodeWithText("新建场景").performClick()
+        ui.onNodeWithText("名称").performTextInput("发布纪要")
+        ui.onNodeWithText("指令").performTextInput("总结讨论结论与后续行动。")
         Espresso.pressBack()
-        ui.onNodeWithText("Save").performScrollTo().performClick()
+        ui.onNodeWithText("保存").performScrollTo().performClick()
         ui.waitUntil(10_000) {
-            runCatching { ui.onNodeWithTag("scenes-list").performScrollToNode(hasText("Release notes")) }.isSuccess
+            runCatching { ui.onNodeWithTag("scenes-list").performScrollToNode(hasText("发布纪要")) }.isSuccess
         }
-        ui.onNodeWithText("Release notes").assertIsDisplayed()
+        ui.onNodeWithText("发布纪要").assertIsDisplayed()
         screenshot("08-scenes-dark", dark = true)
 
         // 320 dp wide, with larger text, to catch clipped actions and IME overlap.
@@ -89,7 +102,7 @@ class UiSmokeTest {
         ui.onNodeWithTag("paste-entry").assertIsDisplayed()
         shell("settings put global animator_duration_scale 0")
         ui.onNodeWithTag("nav-settings").performClick()
-        ui.onNodeWithText("Saving notes").assertIsDisplayed()
+        ui.onNodeWithText("沉淀位置").assertIsDisplayed()
         ui.onNodeWithTag("nav-home").performClick()
         ui.onNodeWithTag("paste-entry").assertIsDisplayed()
         screenshot("10-motion-disabled-home", dark = true)
@@ -99,6 +112,30 @@ class UiSmokeTest {
         shell("wm size reset")
         shell("wm density reset")
         shell("cmd uimode night no")
+
+        // English is available only when explicitly selected. Restore Chinese before final captures.
+        ui.onNodeWithTag("nav-settings").performClick()
+        ui.onNodeWithText("选择应用语言").performScrollTo().performClick()
+        screenshot("11-language-picker-chinese", dark = false)
+        ui.onNodeWithText("English").performClick()
+        ui.waitUntil(10_000) { ui.onAllNodesWithText("Saving notes").fetchSemanticsNodes().isNotEmpty() }
+        assertEquals(Lang.EN, ui.activity.bridge.lang())
+        assertEquals("en", ui.activity.resources.configuration.locales[0].language)
+        ui.onNodeWithTag("nav-scenes").performClick()
+        ui.waitUntil(10_000) {
+            runCatching { ui.onNodeWithTag("scenes-list").performScrollToNode(hasText("Group chat summary")) }.isSuccess
+        }
+        ui.onNodeWithTag("nav-settings").performClick()
+        ui.onNodeWithText("Choose app language").performScrollTo().performClick()
+        ui.onNodeWithText("简体中文").performClick()
+        ui.waitUntil(10_000) { ui.onAllNodesWithText("沉淀位置").fetchSemanticsNodes().isNotEmpty() }
+        assertEquals(Lang.ZH, ui.activity.bridge.lang())
+        ui.onNodeWithTag("nav-home").performClick()
+        waitFor("home")
+        ui.onNodeWithText("首页").assertIsDisplayed()
+        screenshot("12-chinese-restored-home", dark = false)
+        File(outputDirectory(), "language-check.txt").appendText("explicitEnglishVerified=true\nrestoredChineseVerified=true\n")
+        exportCapture("language-check.txt")
     }
 
     private fun waitFor(tag: String) {
@@ -151,6 +188,6 @@ class UiSmokeTest {
     }
 
     private companion object {
-        const val CHAT = "Alex: Let us ship the Android update on Friday.\nSam: I will check the sharing flow and send the release notes.\nAlex: Please include the decisions and next steps."
+        const val CHAT = "小陈：我们周五发布安卓版更新。\n小林：我来检查分享流程，并整理发布说明。\n小陈：请把讨论结论和后续行动一起发出来。"
     }
 }

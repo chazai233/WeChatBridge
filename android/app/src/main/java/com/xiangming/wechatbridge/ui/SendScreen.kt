@@ -74,6 +74,7 @@ import com.xiangming.wechatbridge.core.TargetKind
 import com.xiangming.wechatbridge.data.Preferences
 import com.xiangming.wechatbridge.data.PreparedSend
 import com.xiangming.wechatbridge.data.SendSubject
+import com.xiangming.wechatbridge.data.userError
 import com.xiangming.wechatbridge.deliver.Deliverer
 import com.xiangming.wechatbridge.deliver.SendOutcome
 import com.xiangming.wechatbridge.deliver.SendRequest
@@ -102,7 +103,7 @@ fun SendScreen(subject: SendSubject, onClose: () -> Unit, onDone: () -> Unit) {
                 prepared.material.chatText
                 Loaded.Ready(prepared)
             } catch (error: Exception) {
-                Loaded.Failed(error.localizedMessage ?: error.toString())
+                Loaded.Failed(context.userError(error))
             }
         }
     }
