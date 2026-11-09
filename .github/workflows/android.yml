@@ -34,20 +34,39 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # Installs Gradle on PATH and caches dependencies. The wrapper JAR is a
-      # binary that could not be produced where this project was written, so
-      # CI generates it with the pinned Gradle when the repository lacks it.
+      # Caches ~/.gradle (including the wrapper distribution). It does not
+      # provision a Gradle version itself: that single download hit repeated
+      # 504s from Gradle's CDN, so the wrapper below fetches with retries.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
 
+      # The wrapper JAR is a binary that could not be produced where this
+      # project was written. When the repository lacks it, generate one in an
+      # empty directory (so this project's build scripts are not evaluated by
+      # whatever Gradle the runner ships), or fall back to the JAR in Gradle's
+      # own repository at the pinned tag.
       - name: Generate Gradle wrapper JAR if missing
         run: |
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            gradle wrapper --gradle-version "$GRADLE_VERSION" --distribution-type bin
+            scratch="$(mktemp -d)"
+            if command -v gradle >/dev/null 2>&1 &&
+               (cd "$scratch" && touch settings.gradle && gradle --no-daemon -q wrapper --gradle-version "$GRADLE_VERSION"); then
+              cp "$scratch/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/
+            else
+              curl -fsSL --retry 5 --retry-all-errors -o gradle/wrapper/gradle-wrapper.jar \
+                "https://raw.githubusercontent.com/gradle/gradle/v${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar"
+            fi
           fi
           chmod +x gradlew
+
+      - name: Download Gradle distribution
+        run: |
+          for attempt in 1 2 3 4 5; do
+            ./gradlew --no-daemon --version && exit 0
+            echo "Gradle download failed (attempt $attempt), retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+          exit 1
 
       - name: Unit tests
         run: ./gradlew --no-daemon :core:test :app:testDebugUnitTest
