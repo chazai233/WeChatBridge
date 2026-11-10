@@ -1,7 +1,9 @@
 package com.xiangming.wechatbridge.ui
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import com.xiangming.wechatbridge.data.Preferences
 import com.xiangming.wechatbridge.data.inAppLanguage
 import com.xiangming.wechatbridge.core.Lang
@@ -16,5 +18,10 @@ abstract class LocalizedActivity : ComponentActivity() {
         super.onResume()
         val expected = if (Preferences(this).language == Lang.ZH) "zh" else "en"
         if (resources.configuration.locales[0].language != expected) recreate()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        enableEdgeToEdge()
     }
 }

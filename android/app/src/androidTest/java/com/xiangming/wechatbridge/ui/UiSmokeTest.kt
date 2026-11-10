@@ -72,12 +72,12 @@ class UiSmokeTest {
         ui.onNodeWithTag("send-confirm").performClick() // Default destination: clipboard.
         waitFor("home")
         screenshot("06-home-dark", dark = true)
-        ui.onNodeWithTag("nav-history").performClick()
+        navigate("nav-history")
         ui.waitUntil(10_000) { ui.onAllNodesWithText("已复制").fetchSemanticsNodes().isNotEmpty() }
         ui.onNodeWithText("已复制").assertIsDisplayed()
         screenshot("07-history-dark", dark = true)
 
-        ui.onNodeWithTag("nav-scenes").performClick()
+        navigate("nav-scenes")
         ui.onNodeWithText("新建场景").performClick()
         ui.onNodeWithText("名称").performTextInput("发布纪要")
         ui.onNodeWithText("指令").performTextInput("总结讨论结论与后续行动。")
@@ -93,7 +93,11 @@ class UiSmokeTest {
         shell("wm size 640x1280")
         shell("wm density 320")
         shell("settings put system font_scale 1.3")
-        ui.onNodeWithTag("nav-home").performClick()
+        ui.waitUntil(15_000) {
+            val configuration = ui.activity.resources.configuration
+            configuration.screenWidthDp == 320 && configuration.fontScale >= 1.29f
+        }
+        navigate("nav-home")
         ui.onNodeWithTag("paste-entry").performClick()
         ui.onNodeWithTag("paste-input").performTextReplacement(CHAT)
         ui.onNodeWithTag("paste-input").performTouchInput { click() }
@@ -106,9 +110,9 @@ class UiSmokeTest {
         ui.onNodeWithTag("paste-input").assertDoesNotExist()
         ui.onNodeWithTag("paste-entry").assertIsDisplayed()
         shell("settings put global animator_duration_scale 0")
-        ui.onNodeWithTag("nav-settings").performClick()
+        navigate("nav-settings")
         ui.onNodeWithText("沉淀位置").assertIsDisplayed()
-        ui.onNodeWithTag("nav-home").performClick()
+        navigate("nav-home")
         ui.onNodeWithTag("paste-entry").assertIsDisplayed()
         screenshot("10-motion-disabled-home", dark = true)
         shell("settings put global animator_duration_scale 1")
@@ -119,23 +123,23 @@ class UiSmokeTest {
         shell("cmd uimode night no")
 
         // English is available only when explicitly selected. Restore Chinese before final captures.
-        ui.onNodeWithTag("nav-settings").performClick()
+        navigate("nav-settings")
         ui.onNodeWithText("选择应用语言").performScrollTo().performClick()
         screenshot("11-language-picker-chinese", dark = false)
         ui.onNodeWithText("English").performClick()
         ui.waitUntil(10_000) { ui.onAllNodesWithText("Saving notes").fetchSemanticsNodes().isNotEmpty() }
         assertEquals(Lang.EN, ui.activity.bridge.lang())
         assertEquals("en", ui.activity.resources.configuration.locales[0].language)
-        ui.onNodeWithTag("nav-scenes").performClick()
+        navigate("nav-scenes")
         ui.waitUntil(10_000) {
             runCatching { ui.onNodeWithTag("scenes-list").performScrollToNode(hasText("Group chat summary")) }.isSuccess
         }
-        ui.onNodeWithTag("nav-settings").performClick()
+        navigate("nav-settings")
         ui.onNodeWithText("Choose app language").performScrollTo().performClick()
         ui.onNodeWithText("简体中文").performClick()
         ui.waitUntil(10_000) { ui.onAllNodesWithText("沉淀位置").fetchSemanticsNodes().isNotEmpty() }
         assertEquals(Lang.ZH, ui.activity.bridge.lang())
-        ui.onNodeWithTag("nav-home").performClick()
+        navigate("nav-home")
         waitFor("home")
         ui.onNodeWithText("首页").assertIsDisplayed()
         screenshot("12-chinese-restored-home", dark = false)
@@ -158,6 +162,12 @@ class UiSmokeTest {
             assertEquals(originalCount + 1, context.bridge.inbox.batches().size)
             ui.onNodeWithText("发送").assertExists()
         }
+    }
+
+    private fun navigate(tag: String) {
+        // Configuration updates can temporarily merge the tab's semantics into its parent.
+        ui.waitUntil(15_000) { ui.onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
+        ui.onNodeWithTag(tag, useUnmergedTree = true).assertIsDisplayed().performClick()
     }
 
     private fun waitFor(tag: String) {
