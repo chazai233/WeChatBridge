@@ -190,16 +190,30 @@ class UiSmokeTest {
     private fun screenshot(name: String, dark: Boolean) {
         ui.waitForIdle()
         // Configuration alone can update before the actual frame. Check the empty toolbar pixel.
-        ui.waitUntil(10_000) {
-            val frame = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
-            val level = Color.red(frame.getPixel(frame.width - 24, frame.height / 12))
-            frame.recycle()
-            if (dark) level < 80 else level > 140
+        try {
+            ui.waitUntil(10_000) {
+                val frame = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
+                val level = Color.red(frame.getPixel(frame.width - 24, frame.height / 12))
+                frame.recycle()
+                if (dark) level < 80 else level > 140
+            }
+        } finally {
+            // Preserve the actual frame even when the theme check fails, so CI stays diagnosable.
+            val bitmap = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
+            File(outputDirectory(), "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            File(outputDirectory(), "$name-frame.txt").writeText(buildString {
+                appendLine("expectedDark=$dark")
+                appendLine("configuration=${ui.activity.resources.configuration}")
+                appendLine("size=${bitmap.width}x${bitmap.height}")
+                appendLine("sample=${Integer.toHexString(bitmap.getPixel(bitmap.width - 24, bitmap.height / 12))}")
+                for (row in 1..9) {
+                    appendLine((1..9).joinToString(" ") { column -> Integer.toHexString(bitmap.getPixel(bitmap.width * column / 10, bitmap.height * row / 10)) })
+                }
+            })
+            bitmap.recycle()
+            exportCapture("$name.png")
+            exportCapture("$name-frame.txt")
         }
-        val bitmap = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
-        File(outputDirectory(), "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
-        bitmap.recycle()
-        exportCapture("$name.png")
     }
 
     private fun outputDirectory() = File(instrumentation.targetContext.getExternalFilesDir(null), "screenshots").apply { mkdirs() }
